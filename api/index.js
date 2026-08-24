@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { json } = require('stream/consumers');
-const { MemoryManager } = require('./storage');
-const { handleMCPRequest } = require('./mcp-handler');
+const { MemoryManager } = require('../storage');
+const { handleMCPRequest } = require('../mcp-handler');
 
 const memory = new MemoryManager();
 
