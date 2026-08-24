@@ -5,14 +5,12 @@ const { handleMCPRequest } = require('../mcp-handler');
 
 const memory = new MemoryManager();
 
-// ===== /brief 接口 =====
 async function handleBrief(req, res) {
   const brief = await memory.getBrief();
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(brief));
 }
 
-// ===== /mcp 接口 =====
 async function handleMCP(req, res) {
   const body = await json(req);
   const result = await handleMCPRequest(body, memory);
@@ -20,7 +18,6 @@ async function handleMCP(req, res) {
   res.end(JSON.stringify(result));
 }
 
-// ===== 路由 =====
 async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
@@ -36,10 +33,8 @@ async function handler(req, res) {
   res.end('Not Found');
 }
 
-// ===== Vercel serverless 导出 =====
 module.exports = handler;
 
-// ===== 本地运行时启动 =====
 if (require.main === module) {
   const http = require('http');
   const server = http.createServer(handler);
