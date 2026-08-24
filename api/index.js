@@ -12,6 +12,11 @@ async function handleBrief(req, res) {
 }
 
 async function handleMCP(req, res) {
+  if (req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
   const body = await json(req);
   const result = await handleMCPRequest(body, memory);
   res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -21,7 +26,7 @@ async function handleMCP(req, res) {
 async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
-  if (req.method === 'POST' && url.pathname === '/mcp') {
+  if (url.pathname === '/mcp') {
     return handleMCP(req, res);
   }
 
