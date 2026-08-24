@@ -1,12 +1,11 @@
-const { Client } = require('pg');
+const { Pool } = require('pg');
 
 class MemoryManager {
   constructor() {
-    this.client = new Client({
+    this.client = new Pool({
       connectionString: process.env.POSTGRES_URL,
       ssl: { rejectUnauthorized: false }
     });
-    this.client.connect();
   }
 
   // ===== /brief =====
@@ -19,7 +18,6 @@ class MemoryManager {
       this.client.query(`SELECT content, created_at FROM memories WHERE type = 'project' ORDER BY created_at DESC LIMIT 1`)
     ]);
 
-    // 生成情绪摘要
     let emotionSummary = '无足够日记数据';
     if (diary.rows.length > 0) {
       const avgValence = diary.rows.reduce((s, r) => s + (r.valence || 0), 0) / diary.rows.length;
@@ -38,7 +36,6 @@ class MemoryManager {
 
   // ===== hold =====
   async hold(content, type, relation, importance = 5) {
-    // 自动标记情感（极简版：根据关键词判断）
     let valence = 0;
     let arousal = 0;
     const positive = ['开心', '好', '喜欢', '棒', '顺利', '舒服', '高兴', '感谢'];
