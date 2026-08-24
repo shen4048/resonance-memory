@@ -3,12 +3,11 @@ const { Pool } = require('pg');
 class MemoryManager {
   constructor() {
     this.client = new Pool({
-      connectionString: process.env.POSTGRES_URL,
+      connectionString: process.env.neow_DATABASE_URL,
       ssl: { rejectUnauthorized: false }
     });
   }
 
-  // ===== /brief =====
   async getBrief() {
     const [core, memo, daily, diary, project] = await Promise.all([
       this.client.query(`SELECT content FROM memories WHERE type = 'core' ORDER BY created_at DESC LIMIT 10`),
@@ -34,7 +33,6 @@ class MemoryManager {
     };
   }
 
-  // ===== hold =====
   async hold(content, type, relation, importance = 5) {
     let valence = 0;
     let arousal = 0;
@@ -57,7 +55,6 @@ class MemoryManager {
     return { success: true, id: res.rows[0].id, valence, arousal };
   }
 
-  // ===== search =====
   async search(query, type, limit = 5) {
     let sql = `SELECT * FROM memories WHERE content ILIKE $1`;
     const params = [`%${query}%`];
@@ -72,7 +69,6 @@ class MemoryManager {
     return res.rows;
   }
 
-  // ===== recall =====
   async recallByEmotion(vMin, vMax, aMin = -1, aMax = 1, limit = 5) {
     const res = await this.client.query(
       `SELECT * FROM memories
@@ -85,13 +81,11 @@ class MemoryManager {
     return res.rows;
   }
 
-  // ===== trace =====
   async trace(id) {
     const res = await this.client.query(`SELECT * FROM memories WHERE id = $1`, [id]);
     return res.rows[0] || null;
   }
 
-  // ===== close =====
   async close(summary) {
     const res = await this.client.query(
       `INSERT INTO memories (content, type, relation, importance, created_at)
