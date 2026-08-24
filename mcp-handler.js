@@ -1,8 +1,13 @@
-// ===== 6 个 MCP 工具 =====
-// breath, hold, search, recall, trace, close
-
 async function handleMCPRequest(request, memory) {
   const { method, params } = request;
+
+  if (method === 'initialize') {
+    return {
+      protocolVersion: '2024-11-05',
+      capabilities: { tools: {} },
+      serverInfo: { name: 'resonance-memory', version: '1.0.0' }
+    };
+  }
 
   if (method === 'tools/list') {
     return {
