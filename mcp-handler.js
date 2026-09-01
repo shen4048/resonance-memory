@@ -1,5 +1,5 @@
 async function handleMCPRequest(request, memory) {
-  const { method, params, id } = request;
+  const { method, params = {}, id } = request;
 
   if (method === 'initialize') {
     return {
@@ -7,14 +7,20 @@ async function handleMCPRequest(request, memory) {
       id,
       result: {
         protocolVersion: '2024-11-05',
-        capabilities: { tools: {} },
-        serverInfo: { name: 'resonance-memory', version: '1.0.0' }
+        capabilities: {
+          tools: {}
+        },
+        serverInfo: {
+          name: 'resonance-memory',
+          version: '1.0.0'
+        }
       }
     };
   }
 
+  // MCP notification 不返回 JSON-RPC response
   if (method === 'notifications/initialized') {
-    return { jsonrpc: '2.0', id };
+    return null;
   }
 
   if (method === 'tools/list') {
@@ -25,8 +31,12 @@ async function handleMCPRequest(request, memory) {
         tools: [
           {
             name: 'breath',
-            description: '换窗启动：返回完整简报，包含你是谁、上窗状态、最近发生、情绪趋势、项目进度',
-            inputSchema: { type: 'object', properties: {} }
+            description:
+              '换窗启动：返回完整简报，包含你是谁、上窗状态、最近发生、情绪趋势、项目进度',
+            inputSchema: {
+              type: 'object',
+              properties: {}
+            }
           },
           {
             name: 'hold',
@@ -34,10 +44,28 @@ async function handleMCPRequest(request, memory) {
             inputSchema: {
               type: 'object',
               properties: {
-                content: { type: 'string' },
-                type: { type: 'string', enum: ['daily', 'diary', 'memo', 'project', 'health', 'writing', 'core'] },
-                relation: { type: 'string' },
-                importance: { type: 'number', default: 5 }
+                content: {
+                  type: 'string'
+                },
+                type: {
+                  type: 'string',
+                  enum: [
+                    'daily',
+                    'diary',
+                    'memo',
+                    'project',
+                    'health',
+                    'writing',
+                    'core'
+                  ]
+                },
+                relation: {
+                  type: 'string'
+                },
+                importance: {
+                  type: 'number',
+                  default: 5
+                }
               },
               required: ['content', 'type']
             }
@@ -48,9 +76,25 @@ async function handleMCPRequest(request, memory) {
             inputSchema: {
               type: 'object',
               properties: {
-                query: { type: 'string' },
-                type: { type: 'string', enum: ['daily', 'diary', 'memo', 'project', 'health', 'writing', 'core'] },
-                limit: { type: 'number', default: 5 }
+                query: {
+                  type: 'string'
+                },
+                type: {
+                  type: 'string',
+                  enum: [
+                    'daily',
+                    'diary',
+                    'memo',
+                    'project',
+                    'health',
+                    'writing',
+                    'core'
+                  ]
+                },
+                limit: {
+                  type: 'number',
+                  default: 5
+                }
               },
               required: ['query']
             }
@@ -61,11 +105,22 @@ async function handleMCPRequest(request, memory) {
             inputSchema: {
               type: 'object',
               properties: {
-                valence_min: { type: 'number' },
-                valence_max: { type: 'number' },
-                arousal_min: { type: 'number' },
-                arousal_max: { type: 'number' },
-                limit: { type: 'number', default: 5 }
+                valence_min: {
+                  type: 'number'
+                },
+                valence_max: {
+                  type: 'number'
+                },
+                arousal_min: {
+                  type: 'number'
+                },
+                arousal_max: {
+                  type: 'number'
+                },
+                limit: {
+                  type: 'number',
+                  default: 5
+                }
               },
               required: ['valence_min', 'valence_max']
             }
@@ -76,7 +131,9 @@ async function handleMCPRequest(request, memory) {
             inputSchema: {
               type: 'object',
               properties: {
-                id: { type: 'number' }
+                id: {
+                  type: 'number'
+                }
               },
               required: ['id']
             }
@@ -87,7 +144,9 @@ async function handleMCPRequest(request, memory) {
             inputSchema: {
               type: 'object',
               properties: {
-                summary: { type: 'string' }
+                summary: {
+                  type: 'string'
+                }
               },
               required: ['summary']
             }
@@ -98,34 +157,85 @@ async function handleMCPRequest(request, memory) {
   }
 
   if (method === 'tools/call') {
-    const { name, arguments: args } = params;
+    const { name, arguments: args = {} } = params;
+
     let data;
+
     switch (name) {
       case 'breath':
-        data = await memory.getBrief(); break;
+        data = await memory.getBrief();
+        break;
+
       case 'hold':
-        data = await memory.hold(args.content, args.type, args.relation, args.importance); break;
+        data = await memory.hold(
+          args.content,
+          args.type,
+          args.relation,
+          args.importance
+        );
+        break;
+
       case 'search':
-        data = await memory.search(args.query, args.type, args.limit); break;
+        data = await memory.search(
+          args.query,
+          args.type,
+          args.limit
+        );
+        break;
+
       case 'recall':
-        data = await memory.recallByEmotion(args.valence_min, args.valence_max, args.arousal_min, args.arousal_max, args.limit); break;
+        data = await memory.recallByEmotion(
+          args.valence_min,
+          args.valence_max,
+          args.arousal_min,
+          args.arousal_max,
+          args.limit
+        );
+        break;
+
       case 'trace':
-        data = await memory.trace(args.id); break;
+        data = await memory.trace(args.id);
+        break;
+
       case 'close':
-        data = await memory.close(args.summary); break;
+        data = await memory.close(args.summary);
+        break;
+
       default:
-        throw new Error(`Unknown tool: ${name}`);
+        return {
+          jsonrpc: '2.0',
+          id,
+          error: {
+            code: -32601,
+            message: `Unknown tool: ${name}`
+          }
+        };
     }
+
     return {
       jsonrpc: '2.0',
       id,
       result: {
-        content: [{ type: 'text', text: JSON.stringify(data) }]
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(data)
+          }
+        ]
       }
     };
   }
 
-  return { jsonrpc: '2.0', id, result: {} };
+  return {
+    jsonrpc: '2.0',
+    id,
+    error: {
+      code: -32601,
+      message: `Method not found: ${method}`
+    }
+  };
 }
 
-module.exports = { handleMCPRequest };
+module.exports = {
+  handleMCPRequest
+};
